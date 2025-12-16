@@ -1,4 +1,11 @@
 package com.example.businessplan.repository;
 
-public interface QuestionRepository {
+import com.example.businessplan.entity.Question;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface QuestionRepository extends JpaRepository<Question, Long> {
+    List<Question> findByProjectIdOrderByOrderNum(Long projectId);
 }
