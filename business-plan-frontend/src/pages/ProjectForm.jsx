@@ -87,6 +87,7 @@ function ProjectForm({ onSuccess }) {
         setExcelData(updatedExcelData);
         setFormData(prev => ({
             ...prev,
+            totalBudget: updatedExcelData.totalAmount.toString(),
             provincialFund: updatedExcelData.totalProvincial.toString(),
             cityFund: updatedExcelData.totalCity.toString(),
             selfFund: updatedExcelData.totalSelf.toString()
@@ -138,35 +139,35 @@ function ProjectForm({ onSuccess }) {
                 return;
             }
 
-            // 2️⃣ 금액 자동 검증 (엑셀 체크보다 먼저!)
-            const total = parseInt(formData.totalBudget) || 0;
-            const provincial = parseInt(formData.provincialFund) || 0;
-            const city = parseInt(formData.cityFund) || 0;
-            const self = parseInt(formData.selfFund) || 0;
-            const sum = provincial + city + self;
-
-            // 🎯 금액이 0이면 엑셀이 없는 거
-            if (sum === 0) {
+            // 2️⃣ 엑셀 데이터 체크
+            if (!excelData || !excelData.items || excelData.items.length === 0) {
                 alert('⚠️ 사업비 산출내역(엑셀 파일)을 업로드해주세요!');
                 setLoading(false);
                 return;
             }
 
-            // 🎯 금액 검증
-            if (total !== sum) {
-                const diff = total - sum;
+            // 3️⃣ 금액 검증 (오차 허용: ±10원)
+            const total = parseInt(formData.totalBudget) || 0;
+            const provincial = parseInt(formData.provincialFund) || 0;
+            const city = parseInt(formData.cityFund) || 0;
+            const self = parseInt(formData.selfFund) || 0;
+            const sum = provincial + city + self;
+            const diff = Math.abs(total - sum);
+
+            // 🎯 10원 이상 차이나면 오류
+            if (diff > 10) {
                 alert(
                     `❌ 금액이 맞지 않습니다!\n\n` +
-                    `총사업비: ${total.toLocaleString()}원\n` +
-                    `현재 합계: ${sum.toLocaleString()}원\n` +
-                    `차이: ${Math.abs(diff).toLocaleString()}원 ${diff > 0 ? '부족' : '초과'}\n\n` +
+                    `총사업비: ${total.toLocaleString()}천원\n` +
+                    `현재 합계: ${sum.toLocaleString()}천원\n` +
+                    `차이: ${diff.toLocaleString()}천원 ${total > sum ? '부족' : '초과'}\n\n` +
                     `다시 수정해주세요.`
                 );
                 setLoading(false);
                 return;
             }
 
-            // 3️⃣ 금액이 맞으면 저장
+            // 4️⃣ 금액이 맞으면 저장
             const projectData = {
                 communityName: formData.communityName,
                 projectName: formData.projectName,
@@ -393,30 +394,7 @@ function ProjectForm({ onSuccess }) {
                                     targetTotal={parseInt(formData.totalBudget)}
                                     onSave={handleSaveBudget}
                                     onCancel={() => {
-                                        console.log('=== X 버튼 클릭 ===');
-                                        console.log('tempExcelData:', tempExcelData);
-
-                                        if (tempExcelData) {
-                                            // 안전하게 저장
-                                            const safeData = {
-                                                items: tempExcelData.items || [],
-                                                totalAmount: tempExcelData.totalAmount || 0,
-                                                totalProvincial: tempExcelData.totalProvincial || tempExcelData.totalProvincialFund || 0,
-                                                totalCity: tempExcelData.totalCity || tempExcelData.totalCityFund || 0,
-                                                totalSelf: tempExcelData.totalSelf || tempExcelData.totalSelfFund || 0,
-                                                itemCount: tempExcelData.itemCount || tempExcelData.items?.length || 0
-                                            };
-
-                                            console.log('저장할 데이터:', safeData);
-
-                                            setExcelData(safeData);
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                provincialFund: safeData.totalProvincial.toString(),
-                                                cityFund: safeData.totalCity.toString(),
-                                                selfFund: safeData.totalSelf.toString()
-                                            }));
-                                        }
+                                        // 취소 시에는 아무것도 저장하지 않음
                                         setShowBudgetTable(false);
                                         setTempExcelData(null);
                                     }}

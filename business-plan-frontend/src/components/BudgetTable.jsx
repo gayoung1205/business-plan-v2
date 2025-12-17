@@ -141,6 +141,7 @@ function BudgetTable({
 
                             {difference !== 0 && (
                                 <button
+                                    type="button"
                                     onClick={handleAutoAdjust}
                                     className="btn btn-secondary"
                                     style={{ whiteSpace: 'nowrap' }}
@@ -257,6 +258,7 @@ function BudgetTable({
                                     <td style={tdStyle}>{item.selfFund?.toLocaleString()}</td>
                                     <td style={{ ...tdStyle, textAlign: 'center' }}>
                                         <button
+                                            type="button"
                                             onClick={() => handleDeleteRow(index)}
                                             style={{
                                                 background: 'none',
@@ -280,6 +282,7 @@ function BudgetTable({
                     {/* 버튼 영역 */}
                     <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
                         <button
+                            type="button"
                             onClick={handleAddRow}
                             className="btn btn-secondary"
                         >
@@ -288,12 +291,14 @@ function BudgetTable({
 
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <button
+                                type="button"
                                 onClick={onCancel}
                                 className="btn btn-secondary"
                             >
                                 취소
                             </button>
                             <button
+                                type="button"
                                 onClick={handleSave}
                                 className="btn btn-primary"
                                 disabled={difference !== 0}
