@@ -146,4 +146,37 @@ public class ProjectService {
 
         return projectRepository.save(project);
     }
+
+    /**
+     * 기존 프로젝트에 대해 질문만 생성
+     */
+    @Transactional
+    public void generateQuestionsForProject(Project project) {
+        System.out.println("=== 질문 생성 시작 (프로젝트 ID: " + project.getId() + ") ===");
+
+        // 1. 상태 업데이트
+        project.setStatus("질문생성중");
+        projectRepository.save(project);
+
+        // 2. 질문 생성
+        String detailedQuestions = gptService.generateDetailedPlanQuestions(
+                project.getProjectName(), project.getProjectLocation());
+
+        String monthlyQuestions = gptService.generateMonthlyPlanQuestions(
+                project.getProjectName(), project.getProjectPeriod());
+
+        String effectQuestions = gptService.generateExpectedEffectQuestions(
+                project.getProjectName());
+
+        // 3. 질문 파싱 및 저장
+        saveQuestions(project, "세부계획", detailedQuestions);
+        saveQuestions(project, "월별추진계획", monthlyQuestions);
+        saveQuestions(project, "기대효과", effectQuestions);
+
+        // 4. 상태 업데이트
+        project.setStatus("질문답변대기");
+        projectRepository.save(project);
+
+        System.out.println("=== 질문 생성 완료 ===");
+    }
 }

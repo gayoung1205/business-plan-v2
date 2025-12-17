@@ -361,4 +361,124 @@ public class ProjectController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    /**
+     * 임시저장 (질문 생성 안함)
+     * POST /api/projects/save-draft
+     */
+    @PostMapping("/save-draft")
+    public ResponseEntity<Map<String, Object>> saveDraft(@RequestBody Map<String, Object> requestData) {
+        try {
+            System.out.println("=== /save-draft 요청 받음 ===");
+
+            // Project 객체 생성
+            Project project = new Project();
+            project.setCommunityName((String) requestData.get("communityName"));
+            project.setProjectName((String) requestData.get("projectName"));
+            project.setProjectPeriod((String) requestData.get("projectPeriod"));
+            project.setProjectLocation((String) requestData.get("projectLocation"));
+
+            project.setTotalBudget(parseLong(requestData.get("totalBudget")));
+            project.setProvincialFund(parseLong(requestData.get("provincialFund")));
+            project.setCityFund(parseLong(requestData.get("cityFund")));
+            project.setSelfFund(parseLong(requestData.get("selfFund")));
+
+            // 엑셀 데이터 저장
+            if (requestData.containsKey("excelData") && requestData.get("excelData") != null) {
+                try {
+                    String budgetDetails = new ObjectMapper()
+                            .writeValueAsString(requestData.get("excelData"));
+                    project.setBudgetDetails(budgetDetails);
+                } catch (Exception e) {
+                    System.err.println("엑셀 데이터 변환 실패: " + e.getMessage());
+                }
+            }
+
+            // 상태를 '임시저장'으로 설정
+            project.setStatus("임시저장");
+
+            // 프로젝트만 저장 (질문 생성 안함!)
+            Project savedProject = projectRepository.save(project);
+
+            System.out.println("임시저장 완료: " + savedProject.getId());
+
+            // 응답
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "사업개요가 저장되었습니다");
+            response.put("projectId", savedProject.getId());
+            response.put("project", savedProject);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("임시저장 실패: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "임시저장 실패: " + e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * 질문 생성 (별도 호출)
+     * POST /api/projects/{projectId}/generate-questions
+     */
+    @PostMapping("/{projectId}/generate-questions")
+    public ResponseEntity<Map<String, Object>> generateQuestions(@PathVariable Long projectId) {
+        try {
+            System.out.println("=== /generate-questions 요청 받음 ===");
+            System.out.println("프로젝트 ID: " + projectId);
+
+            // 프로젝트 조회
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new RuntimeException("프로젝트를 찾을 수 없습니다"));
+
+            // 이미 질문이 생성되었는지 확인
+            List<Question> existingQuestions = questionRepository.findByProjectIdOrderByOrderNum(projectId);
+            if (!existingQuestions.isEmpty()) {
+                System.out.println("이미 질문이 존재함");
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "질문이 이미 생성되어 있습니다");
+                response.put("projectId", project.getId());
+                response.put("project", project);
+                response.put("questions", existingQuestions);
+
+                return ResponseEntity.ok(response);
+            }
+
+            // 질문 생성
+            System.out.println("질문 생성 시작...");
+            projectService.generateQuestionsForProject(project);
+
+            // 생성된 질문 조회
+            List<Question> questions = questionRepository.findByProjectIdOrderByOrderNum(projectId);
+            System.out.println("질문 생성 완료: " + questions.size() + "개");
+
+            // 응답
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "질문 생성 완료!");
+            response.put("projectId", project.getId());
+            response.put("project", project);
+            response.put("questions", questions);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("질문 생성 실패: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "질문 생성 실패: " + e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
 }
