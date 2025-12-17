@@ -195,8 +195,8 @@ function BudgetTable({
                                 <th style={thStyle}>사업비목</th>
                                 <th style={thStyle}>산출근거</th>
                                 <th style={thStyle}>계</th>
-                                <th style={thStyle}>도비(30%)</th>
-                                <th style={thStyle}>시군비(70%)</th>
+                                <th style={thStyle}>도비</th>
+                                <th style={thStyle}>시군비</th>
                                 <th style={thStyle}>자부담</th>
                                 <th style={thStyle}>삭제</th>
                             </tr>
