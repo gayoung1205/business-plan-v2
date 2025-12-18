@@ -132,21 +132,18 @@ function ProjectForm({ onSuccess }) {
         setError('');
 
         try {
-            // 1️⃣ 필수 항목 체크
             if (!formData.communityName || !formData.projectName || !formData.projectLocation) {
                 setError('필수 항목을 모두 입력해주세요');
                 setLoading(false);
                 return;
             }
 
-            // 2️⃣ 엑셀 데이터 체크
             if (!excelData || !excelData.items || excelData.items.length === 0) {
                 alert('⚠️ 사업비 산출내역(엑셀 파일)을 업로드해주세요!');
                 setLoading(false);
                 return;
             }
 
-            // 3️⃣ 금액 검증 (오차 허용: ±10원)
             const total = parseInt(formData.totalBudget) || 0;
             const provincial = parseInt(formData.provincialFund) || 0;
             const city = parseInt(formData.cityFund) || 0;
@@ -154,7 +151,6 @@ function ProjectForm({ onSuccess }) {
             const sum = provincial + city + self;
             const diff = Math.abs(total - sum);
 
-            // 🎯 10원 이상 차이나면 오류
             if (diff > 10) {
                 alert(
                     `❌ 금액이 맞지 않습니다!\n\n` +
@@ -167,7 +163,6 @@ function ProjectForm({ onSuccess }) {
                 return;
             }
 
-            // 4️⃣ 금액이 맞으면 저장
             const projectData = {
                 communityName: formData.communityName,
                 projectName: formData.projectName,
@@ -247,7 +242,6 @@ function ProjectForm({ onSuccess }) {
         }
     };
 
-    // ========== 입력 단계 ==========
     if (step === 'input') {
         return (
             <div className="container">
@@ -330,7 +324,6 @@ function ProjectForm({ onSuccess }) {
                             </p>
                         </div>
 
-                        {/* ========== 사업비 산출내역 ========== */}
                         <div className="card" style={{ background: '#f8f9fa', marginTop: '30px' }}>
                             <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '20px' }}>
                                 사업비 산출내역
@@ -355,7 +348,6 @@ function ProjectForm({ onSuccess }) {
                                 </div>
                             )}
 
-                            {/* 엑셀 업로드 영역 */}
                             <div style={{
                                 border: '2px dashed #ddd',
                                 borderRadius: '8px',
@@ -387,7 +379,6 @@ function ProjectForm({ onSuccess }) {
                                 </label>
                             </div>
 
-                            {/* ⭐ 수정 화면 */}
                             {showBudgetTable && tempExcelData && (
                                 <BudgetTable
                                     initialData={tempExcelData}
@@ -401,7 +392,6 @@ function ProjectForm({ onSuccess }) {
                                 />
                             )}
 
-                            {/* ⭐ 업로드 완료 표시 */}
                             {excelData && !showBudgetTable && (
                                 <div style={{ marginBottom: '20px' }}>
                                     <div className="alert alert-success">
@@ -421,7 +411,6 @@ function ProjectForm({ onSuccess }) {
                                 </div>
                             )}
 
-                            {/* 한글 안내 */}
                             <div style={{
                                 marginTop: '24px',
                                 padding: '16px',
@@ -543,7 +532,6 @@ function ProjectForm({ onSuccess }) {
         );
     }
 
-    // ========== 미리보기 단계 ==========
     if (step === 'preview') {
         return (
             <div className="container">

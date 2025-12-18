@@ -16,7 +16,6 @@ function BudgetTable({
         const updated = [...items];
         updated[index].amount = parseInt(newAmount) || 0;
 
-        // 비율에 맞게 도비/시군비/자부담 재계산
         const amount = updated[index].amount;
         updated[index].provincialFund = Math.round(amount * 0.3);
         updated[index].cityFund = Math.round(amount * 0.7);
@@ -31,7 +30,6 @@ function BudgetTable({
         const updated = [...items];
 
         if (difference > 0) {
-            // 부족: 마지막 항목에 추가
             const lastIndex = items.length - 1;
             updated[lastIndex].amount += difference;
 
@@ -40,13 +38,11 @@ function BudgetTable({
             updated[lastIndex].cityFund = Math.round(amount * 0.7);
 
         } else if (difference < 0) {
-            // 초과: 가장 큰 항목에서 차감
             const maxIndex = items.reduce((maxIdx, item, idx, arr) =>
                 item.amount > arr[maxIdx].amount ? idx : maxIdx, 0);
 
             const reduceAmount = Math.abs(difference);
 
-            // 해당 항목이 차감할 금액보다 큰지 확인
             if (updated[maxIndex].amount >= reduceAmount) {
                 updated[maxIndex].amount -= reduceAmount;
 
@@ -90,7 +86,6 @@ function BudgetTable({
 
         setSaved(true);
 
-        // 0.5초 후 저장
         setTimeout(() => {
             onSave({
                 items,
@@ -105,7 +100,6 @@ function BudgetTable({
 
     return (
         <div style={{ marginTop: '20px' }}>
-            {/* 상태 표시 */}
             <div style={{
                 background: saved ? '#d4edda' : (difference === 0 ? '#d4edda' : '#fff3cd'),
                 padding: '16px',
@@ -180,7 +174,6 @@ function BudgetTable({
                 )}
             </div>
 
-            {/* 테이블 */}
             {!saved && (
                 <>
                     <div style={{ overflowX: 'auto' }}>
@@ -279,7 +272,6 @@ function BudgetTable({
                         </table>
                     </div>
 
-                    {/* 버튼 영역 */}
                     <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
                         <button
                             type="button"

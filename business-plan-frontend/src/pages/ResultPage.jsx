@@ -65,7 +65,6 @@ function ResultPage({ projectData }) {
         );
     }
 
-    // 생성 전 상태 확인
     const isNotGenerated = !project.detailedPlan && !project.monthlyPlan && !project.expectedEffect;
 
     return (
@@ -111,7 +110,6 @@ function ResultPage({ projectData }) {
                     </table>
                 </div>
 
-                {/* 생성 버튼 또는 결과 */}
                 {isNotGenerated ? (
                     <div style={{
                         marginTop: '40px',
@@ -138,7 +136,7 @@ function ResultPage({ projectData }) {
                     </div>
                 ) : (
                     <>
-                        {/* 2. 세부계획 */}
+
                         {project.detailedPlan && (
                             <div className="result-section">
                                 <h3 className="result-section-title">2. 세부계획</h3>
@@ -148,7 +146,7 @@ function ResultPage({ projectData }) {
                             </div>
                         )}
 
-                        {/* 3. 월별 추진계획 */}
+
                         {project.monthlyPlan && (
                             <div className="result-section">
                                 <h3 className="result-section-title">3. 월별 추진계획</h3>
@@ -158,7 +156,7 @@ function ResultPage({ projectData }) {
                             </div>
                         )}
 
-                        {/* 4. 기대효과 */}
+
                         {project.expectedEffect && (
                             <div className="result-section">
                                 <h3 className="result-section-title">4. 기대효과</h3>
@@ -180,7 +178,7 @@ function ResultPage({ projectData }) {
                             </p>
 
                             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                {/* DOCX 다운로드 */}
+
                                 <a
                                     href={`http://localhost:8080/api/projects/${project.id}/download`}
                                     download
@@ -190,7 +188,7 @@ function ResultPage({ projectData }) {
                                     📄 DOCX 다운로드
                                 </a>
 
-                                {/* 사업비 엑셀 다운로드 */}
+
                                 {project.budgetDetails && (
                                     <a
                                         href={`http://localhost:8080/api/projects/${project.id}/download-budget`}
@@ -202,7 +200,6 @@ function ResultPage({ projectData }) {
                                     </a>
                                 )}
 
-                                {/* 새 작성 */}
                                 <button
                                     className="btn btn-secondary"
                                     onClick={() => window.location.reload()}

@@ -15,33 +15,29 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 1. 사업개요 정보
-    private String communityName;      // 공동체명
-    private String projectName;        // 사업명
-    private String projectPeriod;      // 사업기간 (예: 2025. 3. ~ 11.)
-    private String projectLocation;    // 사업위치
+    private String communityName;
+    private String projectName;
+    private String projectPeriod;
+    private String projectLocation;
 
-    // 사업비
-    private Long totalBudget;          // 총사업비 (단위: 천원)
-    private Long provincialFund;       // 도비
-    private Long cityFund;             // 시군비
-    private Long selfFund;             // 자부담
+    private Long totalBudget;
+    private Long provincialFund;
+    private Long cityFund;
+    private Long selfFund;
 
     @Column(columnDefinition = "TEXT")
-    private String budgetDetails;      // 사업비 산출내역 (JSON 형식)
-
-    // AI 생성 내용
-    @Column(columnDefinition = "TEXT")
-    private String detailedPlan;       // 2. 세부계획
+    private String budgetDetails;
 
     @Column(columnDefinition = "TEXT")
-    private String monthlyPlan;        // 3. 월별 추진계획
+    private String detailedPlan;
 
     @Column(columnDefinition = "TEXT")
-    private String expectedEffect;     // 4. 기대효과
+    private String monthlyPlan;
 
-    // 메타 정보
-    private String status;             // 작성중, 완료
+    @Column(columnDefinition = "TEXT")
+    private String expectedEffect;
+
+    private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

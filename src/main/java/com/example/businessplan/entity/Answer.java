@@ -20,8 +20,8 @@ public class Answer {
     private Question question;
 
     @Column(columnDefinition = "TEXT")
-    private String userAnswer;         // 사용자 답변
+    private String userAnswer;
 
     @Column(columnDefinition = "TEXT")
-    private String aiGeneratedText;    // AI가 확장한 전문 문장
+    private String aiGeneratedText;
 }

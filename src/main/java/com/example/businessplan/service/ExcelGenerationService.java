@@ -12,19 +12,14 @@ import java.util.Map;
 @Service
 public class ExcelGenerationService {
 
-    /**
-     * 사업비 산출내역을 엑셀 파일로 생성
-     */
     public byte[] generateBudgetExcel(Map<String, Object> budgetData) throws IOException {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("사업비 산출내역");
 
-        // 스타일 설정
         CellStyle headerStyle = createHeaderStyle(workbook);
         CellStyle dataStyle = createDataStyle(workbook);
         CellStyle numberStyle = createNumberStyle(workbook);
 
-        // 헤더 생성
         Row headerRow = sheet.createRow(0);
         String[] headers = {"세부사업", "사업비목", "산출근거", "계", "도비(30%)", "시군비(70%)", "자부담"};
 
@@ -34,7 +29,6 @@ public class ExcelGenerationService {
             cell.setCellStyle(headerStyle);
         }
 
-        // 데이터 입력
         List<Map<String, Object>> items = (List<Map<String, Object>>) budgetData.get("items");
         int rowNum = 1;
 
@@ -50,7 +44,6 @@ public class ExcelGenerationService {
             createCell(row, 6, getLong(item.get("selfFund")), numberStyle);
         }
 
-        // 합계 행
         Row totalRow = sheet.createRow(rowNum);
         Cell totalLabelCell = totalRow.createCell(0);
         totalLabelCell.setCellValue("합계");
@@ -66,13 +59,11 @@ public class ExcelGenerationService {
         createCell(totalRow, 5, getLong(budgetData.get("totalCity")), headerStyle);
         createCell(totalRow, 6, getLong(budgetData.get("totalSelf")), headerStyle);
 
-        // 열 너비 자동 조정
         for (int i = 0; i < headers.length; i++) {
             sheet.autoSizeColumn(i);
             sheet.setColumnWidth(i, sheet.getColumnWidth(i) + 1000);
         }
 
-        // ByteArray로 변환
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         workbook.write(out);
         workbook.close();

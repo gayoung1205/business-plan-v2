@@ -17,7 +17,6 @@ function App() {
     setCurrentStep('result');
   };
 
-  // 진행 단계 정보
   const steps = [
     { id: 'form', label: '사업개요 입력', number: 1 },
     { id: 'questions', label: '질문 답변', number: 2 },
@@ -43,7 +42,6 @@ function App() {
           </div>
         </header>
 
-        {/* 🎯 진행 단계 표시 */}
         <div className="container">
           <div className="step-indicator fade-in">
             {steps.map((step, index) => (

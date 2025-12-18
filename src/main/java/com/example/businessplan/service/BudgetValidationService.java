@@ -7,20 +7,15 @@ import java.util.Map;
 @Service
 public class BudgetValidationService {
 
-    /**
-     * 사업비 검증
-     */
     public Map<String, Object> validateBudget(Long totalBudget, Long provincialFund,
                                               Long cityFund, Long selfFund) {
         Map<String, Object> result = new HashMap<>();
 
-        // null 체크 및 기본값 설정
         totalBudget = totalBudget != null ? totalBudget : 0L;
         provincialFund = provincialFund != null ? provincialFund : 0L;
         cityFund = cityFund != null ? cityFund : 0L;
         selfFund = selfFund != null ? selfFund : 0L;
 
-        // 계산
         Long calculatedTotal = provincialFund + cityFund + selfFund;
 
         System.out.println("=== 사업비 검증 ===");
@@ -30,7 +25,6 @@ public class BudgetValidationService {
         System.out.println("자부담: " + selfFund);
         System.out.println("계산된 합계: " + calculatedTotal);
 
-        // 검증
         if (totalBudget.equals(calculatedTotal)) {
             result.put("valid", true);
             result.put("message", "✅ 사업비가 정확합니다!");
@@ -42,14 +36,12 @@ public class BudgetValidationService {
             String suggestion;
 
             if (difference > 0) {
-                // 부족한 경우
                 suggestion = String.format(
                         "❌ 오류: 총 %,d천원이 부족합니다. 자부담을 %,d천원으로 수정하세요.",
                         difference,
                         selfFund + difference
                 );
             } else {
-                // 초과한 경우
                 suggestion = String.format(
                         "❌ 오류: 총 %,d천원이 초과되었습니다. 자부담을 %,d천원으로 수정하세요.",
                         Math.abs(difference),
@@ -66,9 +58,6 @@ public class BudgetValidationService {
         return result;
     }
 
-    /**
-     * 사업비 산출내역 검증 (테이블 형식)
-     */
     public Map<String, Object> validateBudgetDetails(String budgetDetailsJson, Long totalBudget) {
         Map<String, Object> result = new HashMap<>();
 
@@ -90,13 +79,11 @@ public class BudgetValidationService {
 
         Map<String, Object> result = new HashMap<>();
 
-        // 엑셀에서 파싱한 금액
         Long excelTotal = (Long) excelData.get("totalAmount");
         Long excelProvincial = (Long) excelData.get("totalProvincial");
         Long excelCity = (Long) excelData.get("totalCity");
         Long excelSelf = (Long) excelData.get("totalSelf");
 
-        // 1. 총사업비 일치 여부
         if (!inputTotalBudget.equals(excelTotal)) {
             result.put("valid", false);
             long diff = inputTotalBudget - excelTotal;
@@ -117,7 +104,6 @@ public class BudgetValidationService {
             return result;
         }
 
-        // 2. 도비/시군비/자부담 일치 여부
         if (!inputProvincialFund.equals(excelProvincial) ||
                 !inputCityFund.equals(excelCity) ||
                 !inputSelfFund.equals(excelSelf)) {
@@ -132,7 +118,6 @@ public class BudgetValidationService {
             return result;
         }
 
-        // 3. 모든 검증 통과
         result.put("valid", true);
         result.put("message", "✅ 사업비 검증 완료! 모든 금액이 정확합니다.");
 

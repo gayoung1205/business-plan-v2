@@ -27,13 +27,10 @@ public class GptService {
         System.out.println("✅ OpenAI 서비스 초기화 성공! (Model: " + model + ")");
     }
 
-    /**
-     * 세부계획 질문 생성 (2개)
-     */
     public String generateDetailedPlanQuestions(String projectName, String projectLocation) {
         try {
             StringBuilder prompt = new StringBuilder();
-            prompt.append("다음 사업에 대해 '세부계획'을 작성하기 위한 질문 2개를 만들어주세요.\n\n");
+            prompt.append("다음 사업에 대해 '세부계획'을 작성하기 위한 질문 1개를 만들어주세요.\n\n");
             prompt.append("사업명: ").append(projectName).append("\n");
             prompt.append("위치: ").append(projectLocation).append("\n\n");
             prompt.append("질문 조건:\n");
@@ -66,13 +63,10 @@ public class GptService {
         }
     }
 
-    /**
-     * 월별 추진계획 질문 생성 (2개)
-     */
     public String generateMonthlyPlanQuestions(String projectName, String projectPeriod) {
         try {
             StringBuilder prompt = new StringBuilder();
-            prompt.append("다음 사업의 '월별 추진계획'을 작성하기 위한 질문 2개를 만들어주세요.\n\n");
+            prompt.append("다음 사업의 '월별 추진계획'을 작성하기 위한 질문 1개를 만들어주세요.\n\n");
             prompt.append("사업명: ").append(projectName).append("\n");
             prompt.append("기간: ").append(projectPeriod).append("\n\n");
             prompt.append("질문 조건:\n");
@@ -105,13 +99,10 @@ public class GptService {
         }
     }
 
-    /**
-     * 기대효과 질문 생성 (2개)
-     */
     public String generateExpectedEffectQuestions(String projectName) {
         try {
             StringBuilder prompt = new StringBuilder();
-            prompt.append("다음 사업의 '기대효과'를 작성하기 위한 질문 2개를 만들어주세요.\n\n");
+            prompt.append("다음 사업의 '기대효과'를 작성하기 위한 질문 1개를 만들어주세요.\n\n");
             prompt.append("사업명: ").append(projectName).append("\n\n");
             prompt.append("질문 조건:\n");
             prompt.append("1. 존댓말 사용\n");
@@ -143,9 +134,6 @@ public class GptService {
         }
     }
 
-    /**
-     * 사용자 답변을 전문적인 문장으로 확장
-     */
     public String expandAnswer(String question, String userAnswer, String section) {
         try {
             StringBuilder prompt = new StringBuilder();
@@ -181,9 +169,6 @@ public class GptService {
         }
     }
 
-    /**
-     * 질문/답변 기반으로 2페이지 내용 생성 (세부계획, 월별계획, 기대효과)
-     */
     public Map<String, String> generatePage2Content(
             Project project,
             List<Answer> answers) {
@@ -285,7 +270,6 @@ public class GptService {
             System.out.println(response);
             System.out.println("=== 응답 끝 ===");
 
-            // 응답 파싱
             return parsePageContent(response);
 
         } catch (Exception e) {
@@ -293,9 +277,7 @@ public class GptService {
         }
     }
 
-    /**
-     * GPT 응답을 섹션별로 파싱
-     */
+
     private Map<String, String> parsePageContent(String response) {
         Map<String, String> sections = new LinkedHashMap<>();
 
@@ -304,18 +286,14 @@ public class GptService {
         StringBuilder currentContent = new StringBuilder();
 
         for (String line : lines) {
-            // [섹션명] 패턴 찾기
             if (line.trim().startsWith("[") && line.trim().endsWith("]")) {
-                // 이전 섹션 저장
                 if (currentSection != null && currentContent.length() > 0) {
                     sections.put(currentSection, currentContent.toString().trim());
                 }
 
-                // 새 섹션 시작
                 currentSection = line.trim().substring(1, line.trim().length() - 1);
                 currentContent = new StringBuilder();
             } else if (currentSection != null) {
-                // 현재 섹션 내용 추가
                 if (currentContent.length() > 0) {
                     currentContent.append("\n");
                 }
@@ -323,7 +301,6 @@ public class GptService {
             }
         }
 
-        // 마지막 섹션 저장
         if (currentSection != null && currentContent.length() > 0) {
             sections.put(currentSection, currentContent.toString().trim());
         }

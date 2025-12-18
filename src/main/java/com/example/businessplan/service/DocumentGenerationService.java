@@ -14,13 +14,9 @@ import java.util.Map;
 @Service
 public class DocumentGenerationService {
 
-    /**
-     * 사업계획서를 DOCX 파일로 생성
-     */
     public byte[] generateDocx(Project project) throws IOException {
         XWPFDocument document = new XWPFDocument();
 
-        // 제목
         XWPFParagraph titlePara = document.createParagraph();
         titlePara.setAlignment(ParagraphAlignment.CENTER);
         XWPFRun titleRun = titlePara.createRun();
@@ -30,7 +26,6 @@ public class DocumentGenerationService {
         titleRun.setFontFamily("맑은 고딕");
         addEmptyLine(document);
 
-        // 1. 사업개요
         addSectionTitle(document, "1. 사업개요");
         addTableRow(document, "공동체명", project.getCommunityName());
         addTableRow(document, "사업명", project.getProjectName());
@@ -47,7 +42,6 @@ public class DocumentGenerationService {
         addTableRow(document, "사업비", budgetInfo);
         addEmptyLine(document);
 
-        // ⭐ 사업비 산출내역 표 추가
         if (project.getBudgetDetails() != null && !project.getBudgetDetails().isEmpty()) {
             try {
                 addSectionTitle(document, "사업비 산출내역");
@@ -63,27 +57,23 @@ public class DocumentGenerationService {
             }
         }
 
-        // 2. 세부계획
         if (project.getDetailedPlan() != null) {
             addSectionTitle(document, "2. 세부계획");
             addContent(document, project.getDetailedPlan());
             addEmptyLine(document);
         }
 
-        // 3. 월별 추진계획
         if (project.getMonthlyPlan() != null) {
             addSectionTitle(document, "3. 월별 추진계획");
             addContent(document, project.getMonthlyPlan());
             addEmptyLine(document);
         }
 
-        // 4. 기대효과
         if (project.getExpectedEffect() != null) {
             addSectionTitle(document, "4. 기대효과");
             addContent(document, project.getExpectedEffect());
         }
 
-        // ByteArray로 변환
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         document.write(out);
         document.close();
@@ -91,17 +81,12 @@ public class DocumentGenerationService {
         return out.toByteArray();
     }
 
-    /**
-     * 사업비 산출내역 표 추가
-     */
     private void addBudgetTable(XWPFDocument document, Map<String, Object> budgetData) {
         List<Map<String, Object>> items = (List<Map<String, Object>>) budgetData.get("items");
 
-        // 표 생성 (헤더 1행 + 데이터 + 합계 1행)
         XWPFTable table = document.createTable(items.size() + 2, 7);
         table.setWidth("100%");
 
-        // 헤더
         XWPFTableRow headerRow = table.getRow(0);
         String[] headers = {"세부사업", "사업비목", "산출근거", "계", "도비(30%)", "시군비(70%)", "자부담"};
 
@@ -117,7 +102,6 @@ public class DocumentGenerationService {
             run.setFontFamily("맑은 고딕");
         }
 
-        // 데이터
         for (int i = 0; i < items.size(); i++) {
             Map<String, Object> item = items.get(i);
             XWPFTableRow row = table.getRow(i + 1);
@@ -131,7 +115,6 @@ public class DocumentGenerationService {
             setCellText(row.getCell(6), String.format("%,d", getLong(item.get("selfFund"))), true);
         }
 
-        // 합계
         XWPFTableRow totalRow = table.getRow(items.size() + 1);
         XWPFTableCell totalCell = totalRow.getCell(0);
         totalCell.setColor("F8F9FA");
@@ -178,9 +161,6 @@ public class DocumentGenerationService {
         }
     }
 
-    /**
-     * 섹션 제목 추가
-     */
     private void addSectionTitle(XWPFDocument document, String title) {
         XWPFParagraph para = document.createParagraph();
         XWPFRun run = para.createRun();
@@ -190,9 +170,6 @@ public class DocumentGenerationService {
         run.setFontFamily("맑은 고딕");
     }
 
-    /**
-     * 내용 추가
-     */
     private void addContent(XWPFDocument document, String content) {
         String[] lines = content.split("\n");
         for (String line : lines) {
@@ -204,16 +181,12 @@ public class DocumentGenerationService {
         }
     }
 
-    /**
-     * 테이블 행 추가 (2열)
-     */
     private void addTableRow(XWPFDocument document, String label, String value) {
         XWPFTable table = document.createTable(1, 2);
         table.setWidth("100%");
 
         XWPFTableRow row = table.getRow(0);
 
-        // 첫 번째 셀 (레이블)
         XWPFTableCell cell1 = row.getCell(0);
         cell1.setColor("F8F9FA");
         cell1.setWidth("30%");
@@ -224,7 +197,6 @@ public class DocumentGenerationService {
         run1.setFontSize(11);
         run1.setFontFamily("맑은 고딕");
 
-        // 두 번째 셀 (값)
         XWPFTableCell cell2 = row.getCell(1);
         cell2.setWidth("70%");
         XWPFParagraph para2 = cell2.getParagraphs().get(0);
@@ -234,9 +206,6 @@ public class DocumentGenerationService {
         run2.setFontFamily("맑은 고딕");
     }
 
-    /**
-     * 빈 줄 추가
-     */
     private void addEmptyLine(XWPFDocument document) {
         XWPFParagraph para = document.createParagraph();
         para.createRun().addBreak();

@@ -19,7 +19,7 @@ public class Question {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Project project;
 
-    private String section;            // 어느 섹션인지 (세부계획, 월별계획, 기대효과)
-    private String questionText;       // 질문 내용
-    private Integer orderNum;          // 순서
+    private String section;
+    private String questionText;
+    private Integer orderNum;
 }

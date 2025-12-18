@@ -26,17 +26,12 @@ public class ProjectService {
     private final GptService gptService;
     private final BudgetValidationService budgetValidationService;
 
-    /**
-     * 1단계: 사업개요 저장 + 질문 생성
-     */
     @Transactional
     public Project createProjectWithQuestions(Project project) {
 
-        // 1. 사업개요 저장
         project.setStatus("질문생성중");
         Project savedProject = projectRepository.save(project);
 
-        // 2. 질문 생성
         String detailedQuestions = gptService.generateDetailedPlanQuestions(
                 project.getProjectName(), project.getProjectLocation());
 
@@ -46,21 +41,16 @@ public class ProjectService {
         String effectQuestions = gptService.generateExpectedEffectQuestions(
                 project.getProjectName());
 
-        // 3. 질문 파싱 및 저장
         saveQuestions(savedProject, "세부계획", detailedQuestions);
         saveQuestions(savedProject, "월별추진계획", monthlyQuestions);
         saveQuestions(savedProject, "기대효과", effectQuestions);
 
-        // 4. 상태 업데이트
         savedProject.setStatus("질문답변대기");
         projectRepository.save(savedProject);
 
         return savedProject;
     }
 
-    /**
-     * 질문 파싱 및 저장
-     */
     private void saveQuestions(Project project, String section, String questionsText) {
         Pattern pattern = Pattern.compile("(\\d+)\\.\\s*(.+)");
         Matcher matcher = pattern.matcher(questionsText);
@@ -79,9 +69,6 @@ public class ProjectService {
         }
     }
 
-    /**
-     * 2단계: 답변 저장
-     */
     @Transactional
     public Answer saveAnswer(Long questionId, String userAnswer) {
         Question question = questionRepository.findById(questionId)
@@ -94,9 +81,6 @@ public class ProjectService {
         return answerRepository.save(answer);
     }
 
-    /**
-     * 3단계: 답변 확장 (AI)
-     */
     @Transactional
     public void expandAllAnswers(Long projectId) {
         List<Answer> answers = answerRepository.findByQuestionProjectId(projectId);
@@ -115,9 +99,6 @@ public class ProjectService {
         }
     }
 
-    /**
-     * 4단계: 최종 사업계획서 생성
-     */
     @Transactional
     public Project generateFinalPlan(Long projectId) {
         System.out.println("=== 최종 계획서 생성 시작 ===");
@@ -130,10 +111,8 @@ public class ProjectService {
 
         System.out.println("답변 개수: " + answers.size());
 
-        // GPT로 2페이지 내용 생성 (세부계획, 월별계획, 기대효과)
         Map<String, String> page2Content = gptService.generatePage2Content(project, answers);
 
-        // Project에 저장
         project.setDetailedPlan(page2Content.get("세부계획"));
         project.setMonthlyPlan(page2Content.get("월별추진계획"));
         project.setExpectedEffect(page2Content.get("기대효과"));
@@ -147,18 +126,13 @@ public class ProjectService {
         return projectRepository.save(project);
     }
 
-    /**
-     * 기존 프로젝트에 대해 질문만 생성
-     */
     @Transactional
     public void generateQuestionsForProject(Project project) {
         System.out.println("=== 질문 생성 시작 (프로젝트 ID: " + project.getId() + ") ===");
 
-        // 1. 상태 업데이트
         project.setStatus("질문생성중");
         projectRepository.save(project);
 
-        // 2. 질문 생성
         String detailedQuestions = gptService.generateDetailedPlanQuestions(
                 project.getProjectName(), project.getProjectLocation());
 
@@ -168,12 +142,10 @@ public class ProjectService {
         String effectQuestions = gptService.generateExpectedEffectQuestions(
                 project.getProjectName());
 
-        // 3. 질문 파싱 및 저장
         saveQuestions(project, "세부계획", detailedQuestions);
         saveQuestions(project, "월별추진계획", monthlyQuestions);
         saveQuestions(project, "기대효과", effectQuestions);
 
-        // 4. 상태 업데이트
         project.setStatus("질문답변대기");
         projectRepository.save(project);
 
