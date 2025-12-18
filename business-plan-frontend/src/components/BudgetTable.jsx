@@ -17,9 +17,15 @@ function BudgetTable({
         updated[index].amount = parseInt(newAmount) || 0;
 
         const amount = updated[index].amount;
-        updated[index].provincialFund = Math.round(amount * 0.3);
-        updated[index].cityFund = Math.round(amount * 0.7);
-        updated[index].selfFund = 0;
+
+        // 🔥 핵심 수정: selfFund에 반올림 오차를 흡수
+        const provincialFund = Math.round(amount * 0.3);
+        const cityFund = Math.round(amount * 0.7);
+        const selfFund = amount - provincialFund - cityFund;  // 나머지를 자부담에
+
+        updated[index].provincialFund = provincialFund;
+        updated[index].cityFund = cityFund;
+        updated[index].selfFund = selfFund;
 
         setItems(updated);
     };
@@ -30,14 +36,21 @@ function BudgetTable({
         const updated = [...items];
 
         if (difference > 0) {
+            // 부족한 경우: 마지막 항목에 추가
             const lastIndex = items.length - 1;
             updated[lastIndex].amount += difference;
 
             const amount = updated[lastIndex].amount;
-            updated[lastIndex].provincialFund = Math.round(amount * 0.3);
-            updated[lastIndex].cityFund = Math.round(amount * 0.7);
+            const provincialFund = Math.round(amount * 0.3);
+            const cityFund = Math.round(amount * 0.7);
+            const selfFund = amount - provincialFund - cityFund;
+
+            updated[lastIndex].provincialFund = provincialFund;
+            updated[lastIndex].cityFund = cityFund;
+            updated[lastIndex].selfFund = selfFund;
 
         } else if (difference < 0) {
+            // 초과한 경우: 가장 큰 금액 항목에서 차감
             const maxIndex = items.reduce((maxIdx, item, idx, arr) =>
                 item.amount > arr[maxIdx].amount ? idx : maxIdx, 0);
 
@@ -47,8 +60,13 @@ function BudgetTable({
                 updated[maxIndex].amount -= reduceAmount;
 
                 const amount = updated[maxIndex].amount;
-                updated[maxIndex].provincialFund = Math.round(amount * 0.3);
-                updated[maxIndex].cityFund = Math.round(amount * 0.7);
+                const provincialFund = Math.round(amount * 0.3);
+                const cityFund = Math.round(amount * 0.7);
+                const selfFund = amount - provincialFund - cityFund;
+
+                updated[maxIndex].provincialFund = provincialFund;
+                updated[maxIndex].cityFund = cityFund;
+                updated[maxIndex].selfFund = selfFund;
             } else {
                 alert('⚠️ 자동 조정 실패\n\n가장 큰 항목의 금액이 차감할 금액보다 작습니다.\n직접 수정해주세요.');
                 return;
@@ -79,10 +97,31 @@ function BudgetTable({
     };
 
     const handleSave = () => {
+        // 각 항목의 합계를 정확하게 계산
         const newTotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
         const newProvincial = items.reduce((sum, item) => sum + (item.provincialFund || 0), 0);
         const newCity = items.reduce((sum, item) => sum + (item.cityFund || 0), 0);
         const newSelf = items.reduce((sum, item) => sum + (item.selfFund || 0), 0);
+
+        // 🔥 검증: 합계가 목표 금액과 정확히 일치하는지 확인
+        if (newTotal !== targetTotal) {
+            alert(`⚠️ 오류: 합계가 목표 금액과 일치하지 않습니다.\n\n현재 합계: ${newTotal.toLocaleString()}천원\n목표 금액: ${targetTotal.toLocaleString()}천원\n\n자동 조정 버튼을 눌러주세요.`);
+            return;
+        }
+
+        // 🔥 추가 검증: 도비+시군비+자부담 = 총사업비
+        const calculatedSum = newProvincial + newCity + newSelf;
+        if (calculatedSum !== newTotal) {
+            alert(`⚠️ 오류: 보조금 합계가 맞지 않습니다.\n\n총사업비: ${newTotal.toLocaleString()}천원\n도비+시군비+자부담: ${calculatedSum.toLocaleString()}천원\n차이: ${Math.abs(newTotal - calculatedSum).toLocaleString()}천원`);
+            return;
+        }
+
+        console.log('=== BudgetTable 저장 데이터 ===');
+        console.log('총사업비:', newTotal);
+        console.log('도비:', newProvincial);
+        console.log('시군비:', newCity);
+        console.log('자부담:', newSelf);
+        console.log('검증 합계:', calculatedSum);
 
         setSaved(true);
 

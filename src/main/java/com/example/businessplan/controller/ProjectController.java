@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -413,5 +414,82 @@ public class ProjectController {
 
             return ResponseEntity.badRequest().body(errorResponse);
         }
+    }
+
+    @PostMapping("/auto-adjust-budget")
+    public ResponseEntity<Map<String, Object>> autoAdjustBudget(@RequestBody Map<String, Object> request) {
+        try {
+            Long targetTotal = Long.parseLong(request.get("targetTotal").toString());
+            List<Map<String, Object>> itemsRaw = (List<Map<String, Object>>) request.get("items");
+
+            // items 복사
+            List<Map<String, Object>> items = new ArrayList<>();
+            for (Map<String, Object> item : itemsRaw) {
+                items.add(new HashMap<>(item));
+            }
+
+            // 현재 합계 계산
+            Long currentTotal = items.stream()
+                    .mapToLong(item -> ((Number) item.get("amount")).longValue())
+                    .sum();
+
+            if (!currentTotal.equals(targetTotal)) {
+                Long difference = currentTotal - targetTotal;
+
+                // 마지막 항목 조정
+                Map<String, Object> lastItem = items.get(items.size() - 1);
+                Long oldAmount = ((Number) lastItem.get("amount")).longValue();
+                Long newAmount = oldAmount - difference;
+
+                // ✨ 산출근거 재계산
+                String oldCalculation = (String) lastItem.get("calculation");
+                String newCalculation = recalculateCalculation(oldCalculation, newAmount);
+
+                lastItem.put("amount", newAmount);
+                lastItem.put("calculation", newCalculation);
+
+                // 도비/시군비도 재계산
+                Long newProvincial = Math.round(newAmount * 0.3);
+                Long newCity = Math.round(newAmount * 0.7);
+                lastItem.put("provincialFund", newProvincial);
+                lastItem.put("cityFund", newCity);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("items", items);
+            response.put("message", "자동 조정 완료");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.ok(errorResponse);
+        }
+    }
+
+    // 산출근거 재계산 헬퍼 메서드
+    private String recalculateCalculation(String originalCalculation, Long newAmount) {
+        // 패턴: "15000원 × 200개"
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)원?\\s*[×xX*]\\s*(\\d+)([^\\d]*)");
+        java.util.regex.Matcher matcher = pattern.matcher(originalCalculation);
+
+        if (matcher.find()) {
+            try {
+                long unitPrice = Long.parseLong(matcher.group(1));
+                String unit = matcher.group(3).trim();
+
+                // 새 수량 계산 (반올림)
+                long newQuantity = Math.round((double) newAmount / unitPrice);
+
+                return String.format("%d원 × %d%s", unitPrice, newQuantity, unit);
+            } catch (NumberFormatException e) {
+                return originalCalculation + " (조정됨)";
+            }
+        }
+
+        return originalCalculation + " (조정됨)";
     }
 }

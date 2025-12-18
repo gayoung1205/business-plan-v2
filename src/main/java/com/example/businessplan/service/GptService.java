@@ -30,7 +30,7 @@ public class GptService {
     public String generateDetailedPlanQuestions(String projectName, String projectLocation) {
         try {
             StringBuilder prompt = new StringBuilder();
-            prompt.append("다음 사업에 대해 '세부계획'을 작성하기 위한 질문 1개를 만들어주세요.\n\n");
+            prompt.append("다음 사업에 대해 '세부계획'을 작성하기 위한 질문 2개를 만들어주세요.\n\n");
             prompt.append("사업명: ").append(projectName).append("\n");
             prompt.append("위치: ").append(projectLocation).append("\n\n");
             prompt.append("질문 조건:\n");
@@ -66,7 +66,7 @@ public class GptService {
     public String generateMonthlyPlanQuestions(String projectName, String projectPeriod) {
         try {
             StringBuilder prompt = new StringBuilder();
-            prompt.append("다음 사업의 '월별 추진계획'을 작성하기 위한 질문 1개를 만들어주세요.\n\n");
+            prompt.append("다음 사업의 '월별 추진계획'을 작성하기 위한 질문 2개를 만들어주세요.\n\n");
             prompt.append("사업명: ").append(projectName).append("\n");
             prompt.append("기간: ").append(projectPeriod).append("\n\n");
             prompt.append("질문 조건:\n");
@@ -102,7 +102,7 @@ public class GptService {
     public String generateExpectedEffectQuestions(String projectName) {
         try {
             StringBuilder prompt = new StringBuilder();
-            prompt.append("다음 사업의 '기대효과'를 작성하기 위한 질문 1개를 만들어주세요.\n\n");
+            prompt.append("다음 사업의 '기대효과'를 작성하기 위한 질문 2개를 만들어주세요.\n\n");
             prompt.append("사업명: ").append(projectName).append("\n\n");
             prompt.append("질문 조건:\n");
             prompt.append("1. 존댓말 사용\n");

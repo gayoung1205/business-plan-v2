@@ -126,6 +126,8 @@ function ProjectForm({ onSuccess }) {
         }
     };
 
+// ProjectForm.jsx의 handleSaveDraft 함수 수정 부분
+
     const handleSaveDraft = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -148,16 +150,67 @@ function ProjectForm({ onSuccess }) {
             const provincial = parseInt(formData.provincialFund) || 0;
             const city = parseInt(formData.cityFund) || 0;
             const self = parseInt(formData.selfFund) || 0;
-            const sum = provincial + city + self;
-            const diff = Math.abs(total - sum);
 
-            if (diff > 10) {
+            // 🔥 핵심 수정: 검증 로직 개선
+            // excelData에서 계산된 값을 사용 (BudgetTable에서 저장된 정확한 값)
+            const excelTotal = excelData.totalAmount || 0;
+            const excelProvincial = excelData.totalProvincial || 0;
+            const excelCity = excelData.totalCity || 0;
+            const excelSelf = excelData.totalSelf || 0;
+
+            console.log('=== handleSaveDraft 검증 ===');
+            console.log('입력 총사업비:', total);
+            console.log('엑셀 총사업비:', excelTotal);
+            console.log('입력 도비:', provincial);
+            console.log('엑셀 도비:', excelProvincial);
+            console.log('입력 시군비:', city);
+            console.log('엑셀 시군비:', excelCity);
+            console.log('입력 자부담:', self);
+            console.log('엑셀 자부담:', excelSelf);
+
+            // 1차 검증: 총사업비 일치 여부
+            if (total !== excelTotal) {
+                const diff = total - excelTotal;
+                alert(
+                    `❌ 총사업비가 맞지 않습니다!\n\n` +
+                    `입력 총사업비: ${total.toLocaleString()}천원\n` +
+                    `엑셀 합계: ${excelTotal.toLocaleString()}천원\n` +
+                    `차이: ${Math.abs(diff).toLocaleString()}천원 ${diff > 0 ? '부족' : '초과'}\n\n` +
+                    `엑셀 파일을 다시 업로드하거나 자동 조정 버튼을 눌러주세요.`
+                );
+                setLoading(false);
+                return;
+            }
+
+            // 2차 검증: formData와 excelData의 세부 항목 일치 여부
+            // 하지만 자동조정 후에는 excelData가 정확한 값이므로 excelData를 우선 사용
+            const sum = provincial + city + self;
+            const excelSum = excelProvincial + excelCity + excelSelf;
+
+            console.log('입력값 합계:', sum);
+            console.log('엑셀값 합계:', excelSum);
+
+            // formData의 값이 excelData와 다르면 excelData를 사용
+            const finalProvincial = excelProvincial;
+            const finalCity = excelCity;
+            const finalSelf = excelSelf;
+
+            // 3차 검증: 최종 합계가 총사업비와 일치하는지 확인
+            const finalSum = finalProvincial + finalCity + finalSelf;
+            const finalDiff = Math.abs(total - finalSum);
+
+            console.log('최종 합계:', finalSum);
+            console.log('최종 차이:', finalDiff);
+
+            // 🔥 중요: 허용 오차를 0으로 설정 (정확히 일치해야 함)
+            // 반올림 오차 등을 고려하여 1천원 이하는 허용
+            if (finalDiff > 1) {
                 alert(
                     `❌ 금액이 맞지 않습니다!\n\n` +
                     `총사업비: ${total.toLocaleString()}천원\n` +
-                    `현재 합계: ${sum.toLocaleString()}천원\n` +
-                    `차이: ${diff.toLocaleString()}천원 ${total > sum ? '부족' : '초과'}\n\n` +
-                    `다시 수정해주세요.`
+                    `현재 합계: ${finalSum.toLocaleString()}천원\n` +
+                    `차이: ${finalDiff.toLocaleString()}천원\n\n` +
+                    `자동 조정 버튼을 눌러 정확히 맞춰주세요.`
                 );
                 setLoading(false);
                 return;
@@ -169,13 +222,13 @@ function ProjectForm({ onSuccess }) {
                 projectPeriod: formData.projectPeriod,
                 projectLocation: formData.projectLocation,
                 totalBudget: total,
-                provincialFund: provincial,
-                cityFund: city,
-                selfFund: self,
+                provincialFund: finalProvincial,  // 🔥 excelData의 정확한 값 사용
+                cityFund: finalCity,              // 🔥 excelData의 정확한 값 사용
+                selfFund: finalSelf,              // 🔥 excelData의 정확한 값 사용
                 excelData: excelData
             };
 
-            console.log('=== 임시저장 데이터 ===');
+            console.log('=== 최종 저장 데이터 ===');
             console.log(projectData);
 
             const response = await fetch('http://localhost:8080/api/projects/save-draft', {
