@@ -126,7 +126,7 @@ function ProjectForm({ onSuccess }) {
         }
     };
 
-// ProjectForm.jsx의 handleSaveDraft 함수 수정 부분
+
 
     const handleSaveDraft = async (e) => {
         e.preventDefault();
@@ -151,24 +151,13 @@ function ProjectForm({ onSuccess }) {
             const city = parseInt(formData.cityFund) || 0;
             const self = parseInt(formData.selfFund) || 0;
 
-            // 🔥 핵심 수정: 검증 로직 개선
-            // excelData에서 계산된 값을 사용 (BudgetTable에서 저장된 정확한 값)
+
             const excelTotal = excelData.totalAmount || 0;
             const excelProvincial = excelData.totalProvincial || 0;
             const excelCity = excelData.totalCity || 0;
             const excelSelf = excelData.totalSelf || 0;
 
-            console.log('=== handleSaveDraft 검증 ===');
-            console.log('입력 총사업비:', total);
-            console.log('엑셀 총사업비:', excelTotal);
-            console.log('입력 도비:', provincial);
-            console.log('엑셀 도비:', excelProvincial);
-            console.log('입력 시군비:', city);
-            console.log('엑셀 시군비:', excelCity);
-            console.log('입력 자부담:', self);
-            console.log('엑셀 자부담:', excelSelf);
 
-            // 1차 검증: 총사업비 일치 여부
             if (total !== excelTotal) {
                 const diff = total - excelTotal;
                 alert(
@@ -182,28 +171,23 @@ function ProjectForm({ onSuccess }) {
                 return;
             }
 
-            // 2차 검증: formData와 excelData의 세부 항목 일치 여부
-            // 하지만 자동조정 후에는 excelData가 정확한 값이므로 excelData를 우선 사용
             const sum = provincial + city + self;
             const excelSum = excelProvincial + excelCity + excelSelf;
 
             console.log('입력값 합계:', sum);
             console.log('엑셀값 합계:', excelSum);
 
-            // formData의 값이 excelData와 다르면 excelData를 사용
             const finalProvincial = excelProvincial;
             const finalCity = excelCity;
             const finalSelf = excelSelf;
 
-            // 3차 검증: 최종 합계가 총사업비와 일치하는지 확인
             const finalSum = finalProvincial + finalCity + finalSelf;
             const finalDiff = Math.abs(total - finalSum);
 
             console.log('최종 합계:', finalSum);
             console.log('최종 차이:', finalDiff);
 
-            // 🔥 중요: 허용 오차를 0으로 설정 (정확히 일치해야 함)
-            // 반올림 오차 등을 고려하여 1천원 이하는 허용
+
             if (finalDiff > 1) {
                 alert(
                     `❌ 금액이 맞지 않습니다!\n\n` +
@@ -222,9 +206,9 @@ function ProjectForm({ onSuccess }) {
                 projectPeriod: formData.projectPeriod,
                 projectLocation: formData.projectLocation,
                 totalBudget: total,
-                provincialFund: finalProvincial,  // 🔥 excelData의 정확한 값 사용
-                cityFund: finalCity,              // 🔥 excelData의 정확한 값 사용
-                selfFund: finalSelf,              // 🔥 excelData의 정확한 값 사용
+                provincialFund: finalProvincial,
+                cityFund: finalCity,
+                selfFund: finalSelf,
                 excelData: excelData
             };
 
