@@ -84,7 +84,13 @@ function ProjectForm({ onSuccess }) {
     };
 
     const handleSaveBudget = (updatedExcelData) => {
+        console.log('=== BudgetTable 저장 ===');
+        console.log('저장 데이터:', updatedExcelData);
+
+        // ✅ 1. 즉시 excelData 업데이트
         setExcelData(updatedExcelData);
+
+        // ✅ 2. formData도 함께 업데이트
         setFormData(prev => ({
             ...prev,
             totalBudget: updatedExcelData.totalAmount.toString(),
@@ -92,9 +98,13 @@ function ProjectForm({ onSuccess }) {
             cityFund: updatedExcelData.totalCity.toString(),
             selfFund: updatedExcelData.totalSelf.toString()
         }));
+
+        // ✅ 3. 테이블 숨기기
         setShowBudgetTable(false);
         setTempExcelData(null);
-        alert('✅ 사업비 저장 완료!');
+
+        // ✅ 4. 확인 알림
+        alert('✅ 사업비 저장 완료!\n\n이제 "저장하고 계속하기" 버튼을 눌러주세요.');
     };
 
     const handleValidateBudget = async () => {
@@ -134,29 +144,32 @@ function ProjectForm({ onSuccess }) {
         setError('');
 
         try {
+            // 필수 항목 검증
             if (!formData.communityName || !formData.projectName || !formData.projectLocation) {
                 setError('필수 항목을 모두 입력해주세요');
                 setLoading(false);
                 return;
             }
 
+            // ✅ excelData 존재 여부 확인 (개선)
+            console.log('=== excelData 검증 ===');
+            console.log('excelData:', excelData);
+            console.log('excelData?.items:', excelData?.items);
+            console.log('items length:', excelData?.items?.length);
+
             if (!excelData || !excelData.items || excelData.items.length === 0) {
-                alert('⚠️ 사업비 산출내역(엑셀 파일)을 업로드해주세요!');
+                alert('⚠️ 사업비 산출내역(엑셀 파일)을 업로드해주세요!\n\n' +
+                    '1. 엑셀 파일 업로드\n' +
+                    '2. 금액이 맞지 않으면 "자동 조정" 클릭\n' +
+                    '3. "저장하기" 버튼 클릭\n' +
+                    '4. "저장하고 계속하기" 버튼 클릭');
                 setLoading(false);
                 return;
             }
 
+            // 금액 검증
             const total = parseInt(formData.totalBudget) || 0;
-            const provincial = parseInt(formData.provincialFund) || 0;
-            const city = parseInt(formData.cityFund) || 0;
-            const self = parseInt(formData.selfFund) || 0;
-
-
             const excelTotal = excelData.totalAmount || 0;
-            const excelProvincial = excelData.totalProvincial || 0;
-            const excelCity = excelData.totalCity || 0;
-            const excelSelf = excelData.totalSelf || 0;
-
 
             if (total !== excelTotal) {
                 const diff = total - excelTotal;
@@ -165,56 +178,29 @@ function ProjectForm({ onSuccess }) {
                     `입력 총사업비: ${total.toLocaleString()}천원\n` +
                     `엑셀 합계: ${excelTotal.toLocaleString()}천원\n` +
                     `차이: ${Math.abs(diff).toLocaleString()}천원 ${diff > 0 ? '부족' : '초과'}\n\n` +
-                    `엑셀 파일을 다시 업로드하거나 자동 조정 버튼을 눌러주세요.`
+                    `표에서 "자동 조정" 버튼을 눌러주세요.`
                 );
                 setLoading(false);
                 return;
             }
 
-            const sum = provincial + city + self;
-            const excelSum = excelProvincial + excelCity + excelSelf;
-
-            console.log('입력값 합계:', sum);
-            console.log('엑셀값 합계:', excelSum);
-
-            const finalProvincial = excelProvincial;
-            const finalCity = excelCity;
-            const finalSelf = excelSelf;
-
-            const finalSum = finalProvincial + finalCity + finalSelf;
-            const finalDiff = Math.abs(total - finalSum);
-
-            console.log('최종 합계:', finalSum);
-            console.log('최종 차이:', finalDiff);
-
-
-            if (finalDiff > 1) {
-                alert(
-                    `❌ 금액이 맞지 않습니다!\n\n` +
-                    `총사업비: ${total.toLocaleString()}천원\n` +
-                    `현재 합계: ${finalSum.toLocaleString()}천원\n` +
-                    `차이: ${finalDiff.toLocaleString()}천원\n\n` +
-                    `자동 조정 버튼을 눌러 정확히 맞춰주세요.`
-                );
-                setLoading(false);
-                return;
-            }
-
+            // 최종 데이터 준비
             const projectData = {
                 communityName: formData.communityName,
                 projectName: formData.projectName,
                 projectPeriod: formData.projectPeriod,
                 projectLocation: formData.projectLocation,
                 totalBudget: total,
-                provincialFund: finalProvincial,
-                cityFund: finalCity,
-                selfFund: finalSelf,
+                provincialFund: excelData.totalProvincial,
+                cityFund: excelData.totalCity,
+                selfFund: excelData.totalSelf,
                 excelData: excelData
             };
 
             console.log('=== 최종 저장 데이터 ===');
             console.log(projectData);
 
+            // 서버 전송
             const response = await fetch('http://localhost:8080/api/projects/save-draft', {
                 method: 'POST',
                 headers: {

@@ -12,16 +12,57 @@ function BudgetTable({
     const currentTotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
     const difference = targetTotal - currentTotal;
 
+    // ✨ 산출근거 자동 재계산 함수
+    const recalculateCalculation = (originalCalculation, newAmount) => {
+        // 패턴 1: "15000원 × 10회" 형식
+        const pattern1 = /(\d+)원?\s*[×xX*]\s*(\d+)([^×xX*\d]*)/;
+        const match1 = originalCalculation.match(pattern1);
+
+        if (match1) {
+            const unitPrice = parseInt(match1[1]);
+            const unit = match1[3].trim();
+
+            // 새 수량 계산 (반올림)
+            const newQuantity = Math.round(newAmount / unitPrice);
+
+            return `${unitPrice.toLocaleString()}원 × ${newQuantity}${unit}`;
+        }
+
+        // 패턴 2: "50000원 × 50명 × 10회" 형식 (복합)
+        const pattern2 = /(\d+)원?\s*[×xX*]\s*(\d+)([^×xX*\d]+)[×xX*]\s*(\d+)([^×xX*\d]*)/;
+        const match2 = originalCalculation.match(pattern2);
+
+        if (match2) {
+            const unitPrice = parseInt(match2[1]);
+            const quantity1 = parseInt(match2[2]);
+            const unit1 = match2[3].trim();
+            const quantity2 = parseInt(match2[4]);
+            const unit2 = match2[5].trim();
+
+            // 전체 수량으로 나눠서 새 값 계산
+            const totalQuantity = quantity1 * quantity2;
+            const newTotalQuantity = Math.round(newAmount / unitPrice);
+
+            // 비율 유지하면서 조정
+            const newQuantity2 = Math.round(newTotalQuantity / quantity1);
+
+            return `${unitPrice.toLocaleString()}원 × ${quantity1}${unit1} × ${newQuantity2}${unit2}`;
+        }
+
+        // 패턴이 맞지 않으면 "(조정됨)" 표시
+        return originalCalculation + ' (조정됨)';
+    };
+
     const handleAmountChange = (index, newAmount) => {
         const updated = [...items];
         updated[index].amount = parseInt(newAmount) || 0;
 
         const amount = updated[index].amount;
 
-
+        // 도비 30%, 시군비 70% 계산
         const provincialFund = Math.round(amount * 0.3);
         const cityFund = Math.round(amount * 0.7);
-        const selfFund = amount - provincialFund - cityFund;  // 나머지를 자부담에
+        const selfFund = amount - provincialFund - cityFund;
 
         updated[index].provincialFund = provincialFund;
         updated[index].cityFund = cityFund;
@@ -36,8 +77,9 @@ function BudgetTable({
         const updated = [...items];
 
         if (difference > 0) {
-
+            // 부족: 마지막 항목에 추가
             const lastIndex = items.length - 1;
+            const oldAmount = updated[lastIndex].amount;
             updated[lastIndex].amount += difference;
 
             const amount = updated[lastIndex].amount;
@@ -49,13 +91,27 @@ function BudgetTable({
             updated[lastIndex].cityFund = cityFund;
             updated[lastIndex].selfFund = selfFund;
 
+            // ✨ 산출근거 재계산
+            const oldCalculation = updated[lastIndex].calculation;
+            updated[lastIndex].calculation = recalculateCalculation(oldCalculation, amount);
+
+            console.log('자동 조정 (부족):', {
+                index: lastIndex,
+                oldAmount,
+                newAmount: amount,
+                oldCalculation,
+                newCalculation: updated[lastIndex].calculation
+            });
+
         } else if (difference < 0) {
+            // 초과: 가장 큰 금액 항목에서 차감
             const maxIndex = items.reduce((maxIdx, item, idx, arr) =>
                 item.amount > arr[maxIdx].amount ? idx : maxIdx, 0);
 
             const reduceAmount = Math.abs(difference);
 
             if (updated[maxIndex].amount >= reduceAmount) {
+                const oldAmount = updated[maxIndex].amount;
                 updated[maxIndex].amount -= reduceAmount;
 
                 const amount = updated[maxIndex].amount;
@@ -66,6 +122,18 @@ function BudgetTable({
                 updated[maxIndex].provincialFund = provincialFund;
                 updated[maxIndex].cityFund = cityFund;
                 updated[maxIndex].selfFund = selfFund;
+
+                // ✨ 산출근거 재계산
+                const oldCalculation = updated[maxIndex].calculation;
+                updated[maxIndex].calculation = recalculateCalculation(oldCalculation, amount);
+
+                console.log('자동 조정 (초과):', {
+                    index: maxIndex,
+                    oldAmount,
+                    newAmount: amount,
+                    oldCalculation,
+                    newCalculation: updated[maxIndex].calculation
+                });
             } else {
                 alert('⚠️ 자동 조정 실패\n\n가장 큰 항목의 금액이 차감할 금액보다 작습니다.\n직접 수정해주세요.');
                 return;
@@ -96,18 +164,18 @@ function BudgetTable({
     };
 
     const handleSave = () => {
-
         const newTotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
         const newProvincial = items.reduce((sum, item) => sum + (item.provincialFund || 0), 0);
         const newCity = items.reduce((sum, item) => sum + (item.cityFund || 0), 0);
         const newSelf = items.reduce((sum, item) => sum + (item.selfFund || 0), 0);
 
-
+        // 검증 1: 총사업비 일치 확인
         if (newTotal !== targetTotal) {
             alert(`⚠️ 오류: 합계가 목표 금액과 일치하지 않습니다.\n\n현재 합계: ${newTotal.toLocaleString()}천원\n목표 금액: ${targetTotal.toLocaleString()}천원\n\n자동 조정 버튼을 눌러주세요.`);
             return;
         }
 
+        // 검증 2: 도비+시군비+자부담 = 총사업비 확인
         const calculatedSum = newProvincial + newCity + newSelf;
         if (calculatedSum !== newTotal) {
             alert(`⚠️ 오류: 보조금 합계가 맞지 않습니다.\n\n총사업비: ${newTotal.toLocaleString()}천원\n도비+시군비+자부담: ${calculatedSum.toLocaleString()}천원\n차이: ${Math.abs(newTotal - calculatedSum).toLocaleString()}천원`);
@@ -120,19 +188,17 @@ function BudgetTable({
         console.log('시군비:', newCity);
         console.log('자부담:', newSelf);
         console.log('검증 합계:', calculatedSum);
+        console.log('항목 목록:', items);
 
-        setSaved(true);
-
-        setTimeout(() => {
-            onSave({
-                items,
-                totalAmount: newTotal,
-                totalProvincial: newProvincial,
-                totalCity: newCity,
-                totalSelf: newSelf,
-                itemCount: items.length
-            });
-        }, 500);
+        // ✅ 딜레이 없이 즉시 저장
+        onSave({
+            items,
+            totalAmount: newTotal,
+            totalProvincial: newProvincial,
+            totalCity: newCity,
+            totalSelf: newSelf,
+            itemCount: items.length
+        });
     };
 
     return (
@@ -191,7 +257,7 @@ function BudgetTable({
                                 borderRadius: '4px',
                                 marginTop: '8px'
                             }}>
-                                ℹ️ 자동 조정 시 가장 큰 금액 항목에서 {Math.abs(difference).toLocaleString()}천원을 차감합니다
+                                ℹ️ 자동 조정 시 가장 큰 금액 항목에서 {Math.abs(difference).toLocaleString()}천원을 차감하고 산출근거도 자동 수정됩니다
                             </div>
                         )}
 
@@ -204,7 +270,7 @@ function BudgetTable({
                                 borderRadius: '4px',
                                 marginTop: '8px'
                             }}>
-                                ℹ️ 자동 조정 시 마지막 항목에 {difference.toLocaleString()}천원을 추가합니다
+                                ℹ️ 자동 조정 시 마지막 항목에 {difference.toLocaleString()}천원을 추가하고 산출근거도 자동 수정됩니다
                             </div>
                         )}
                     </>
@@ -236,8 +302,8 @@ function BudgetTable({
                             {items.map((item, index) => (
                                 <tr key={index} style={{
                                     background: item.amount === Math.max(...items.map(i => i.amount)) && difference < 0
-                                        ? '#fff8e1'
-                                        : 'white'
+                                        ? '#fff3cd'
+                                        : (index === items.length - 1 && difference > 0 ? '#fff3cd' : 'white')
                                 }}>
                                     <td style={tdStyle}>
                                         <input
@@ -249,6 +315,7 @@ function BudgetTable({
                                                 setItems(updated);
                                             }}
                                             style={inputStyle}
+                                            placeholder="주민역량강화교육"
                                         />
                                     </td>
                                     <td style={tdStyle}>
@@ -261,6 +328,7 @@ function BudgetTable({
                                                 setItems(updated);
                                             }}
                                             style={inputStyle}
+                                            placeholder="강사비"
                                         />
                                     </td>
                                     <td style={tdStyle}>
@@ -273,6 +341,7 @@ function BudgetTable({
                                                 setItems(updated);
                                             }}
                                             style={inputStyle}
+                                            placeholder="15000원 × 10회"
                                         />
                                     </td>
                                     <td style={tdStyle}>
