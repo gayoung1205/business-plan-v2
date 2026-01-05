@@ -547,7 +547,7 @@ function ProjectForm({ onSuccess }) {
                             style={{ marginTop: '30px' }}
                             disabled={loading}
                         >
-                            {loading ? '💾 저장 중...' : '💾 저장하고 계속하기'}
+                            {loading ? '💾 저장 중...' : '💾 계속하기'}
                         </button>
                     </form>
                 </div>
