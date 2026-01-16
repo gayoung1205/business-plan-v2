@@ -544,11 +544,27 @@ function ProjectForm({ onSuccess }) {
                         <button
                             type="submit"
                             className="btn btn-primary btn-full"
-                            style={{ marginTop: '30px' }}
-                            disabled={loading}
+                            style={{
+                                marginTop: '30px',
+                                opacity: !excelData ? 0.5 : 1,
+                                cursor: !excelData ? 'not-allowed' : 'pointer'
+                            }}
+                            disabled={loading || !excelData}
                         >
-                            {loading ? '💾 저장 중...' : '💾 계속하기'}
+                            {loading ? '💾 저장 중...' : '💾 저장하고 계속하기'}
                         </button>
+
+                        {!excelData && (
+                            <p style={{
+                                fontSize: '13px',
+                                color: '#e74c3c',
+                                textAlign: 'center',
+                                marginTop: '12px',
+                                fontWeight: '500'
+                            }}>
+                                ⚠️ 엑셀 파일을 업로드하고 저장해야 계속 진행할 수 있습니다
+                            </p>
+                        )}
                     </form>
                 </div>
             </div>
