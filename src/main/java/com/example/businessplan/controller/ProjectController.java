@@ -470,9 +470,7 @@ public class ProjectController {
         }
     }
 
-    // 산출근거 재계산 헬퍼 메서드
     private String recalculateCalculation(String originalCalculation, Long newAmount) {
-        // 패턴: "15000원 × 200개"
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d+)원?\\s*[×xX*]\\s*(\\d+)([^\\d]*)");
         java.util.regex.Matcher matcher = pattern.matcher(originalCalculation);
 
@@ -481,7 +479,6 @@ public class ProjectController {
                 long unitPrice = Long.parseLong(matcher.group(1));
                 String unit = matcher.group(3).trim();
 
-                // 새 수량 계산 (반올림)
                 long newQuantity = Math.round((double) newAmount / unitPrice);
 
                 return String.format("%d원 × %d%s", unitPrice, newQuantity, unit);
